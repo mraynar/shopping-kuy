@@ -42,6 +42,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/checkout', [TransactionsController::class, 'placeOrder'])->name('checkout.store');
     Route::get('/checkout/ongkir', [TransactionsController::class, 'getShippingCost'])->name('checkout.ongkir');
     Route::get('/success', [TransactionsController::class, 'success'])->name('checkout.success');
+    Route::get('/orders', [TransactionsController::class, 'orders'])->name('orders.index');
     Route::get('/messages', function () {
         return Inertia::render('Messages/Index');
     })->name('messages');
