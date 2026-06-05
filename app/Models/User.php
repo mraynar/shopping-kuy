@@ -29,6 +29,7 @@ class User extends Authenticatable
         'postal_code',
         'rajaongkir_destination_id',
         'rajaongkir_destination_label',
+        'role',
     ];
 
     protected $hidden = [
