@@ -12,6 +12,64 @@ use Illuminate\Http\RedirectResponse;
 class SellerController extends Controller
 {
     /**
+     * Tampilkan halaman dashboard seller dengan statistik penjualan.
+     */
+    public function dashboard(): Response|RedirectResponse
+    {
+        $user = Auth::user();
+        $shop = $user->shop;
+
+        if (!$shop) {
+            return redirect()->route('home')->with('message', 'Anda belum memiliki toko.');
+        }
+
+        // Ambil order yang memiliki item dari toko ini
+        $allOrders = Order::query()
+            ->whereHas('items.product', function ($query) use ($shop) {
+                $query->where('shop_id', $shop->id);
+            })
+            ->with([
+                'items' => function ($query) use ($shop) {
+                    $query->whereHas('product', function ($q) use ($shop) {
+                        $q->where('shop_id', $shop->id);
+                    })->with('product');
+                },
+                'user'
+            ])
+            ->get();
+
+        $totalOrdersCount = $allOrders->count();
+        $totalRevenue = 0;
+        $pendingRevenue = 0;
+
+        foreach ($allOrders as $order) {
+            $orderSubtotal = $order->items->reduce(function ($carry, $item) {
+                return $carry + (($item->price_at_purchase ?? $item->price) * $item->quantity);
+            }, 0);
+
+            if ($order->status === 'completed') {
+                $totalRevenue += $orderSubtotal;
+            } elseif (in_array($order->status, ['paid', 'packing', 'shipping'])) {
+                $pendingRevenue += $orderSubtotal;
+            }
+        }
+
+        $recentOrders = $allOrders->sortByDesc('created_at')->take(5)->values();
+        $productsCount = $shop->products()->count();
+
+        return Inertia::render('Seller/DashboardPage', [
+            'shop' => $shop,
+            'stats' => [
+                'total_orders' => $totalOrdersCount,
+                'total_revenue' => $totalRevenue,
+                'pending_revenue' => $pendingRevenue,
+                'total_products' => $productsCount,
+            ],
+            'recent_orders' => $recentOrders
+        ]);
+    }
+
+    /**
      * Tampilkan halaman order masuk untuk seller.
      */
     public function orders(): Response|RedirectResponse
