@@ -9,6 +9,7 @@ use App\Http\Controllers\LocationController;
 use App\Http\Controllers\TransactionsController;
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\SellerController;
+use App\Http\Controllers\ReviewController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -47,6 +48,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/messages', function () {
         return Inertia::render('Messages/Index');
     })->name('messages');
+    Route::post('/reviews', [ReviewController::class, 'store'])->name('reviews.store');
 
     // Seller Routes
     Route::prefix('seller')->name('seller.')->group(function () {
