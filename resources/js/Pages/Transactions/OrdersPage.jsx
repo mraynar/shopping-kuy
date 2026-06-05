@@ -4,13 +4,20 @@ import { Head, Link, router } from '@inertiajs/react';
 import { 
     ChevronDown, ChevronUp, Package, Truck, Calendar, 
     CreditCard, MapPin, ClipboardList, ExternalLink, RefreshCw,
-    AlertTriangle, Loader2
+    AlertTriangle, Loader2, Star
 } from 'lucide-react';
 
-export default function OrdersPage({ auth, orders = [] }) {
+export default function OrdersPage({ auth, orders = [], flash }) {
     const [expandedOrderId, setExpandedOrderId] = useState(null);
     const [orderToCancel, setOrderToCancel] = useState(null);
     const [isCancelling, setIsCancelling] = useState(false);
+    
+    const [reviewItem, setReviewItem] = useState(null); // { orderId, productId, productName }
+    const [rating, setRating] = useState(5);
+    const [reviewBody, setReviewBody] = useState('');
+    const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+
+    const [showFlash, setShowFlash] = useState(true);
 
     const toggleExpand = (id) => {
         if (expandedOrderId === id) {
@@ -29,6 +36,29 @@ export default function OrdersPage({ auth, orders = [] }) {
             },
             onFinish: () => {
                 setIsCancelling(false);
+            }
+        });
+    };
+
+    const handleSubmitReview = (e) => {
+        e.preventDefault();
+        if (!reviewItem || !reviewBody.trim()) return;
+
+        setIsSubmittingReview(true);
+        router.post('/reviews', {
+            order_id: reviewItem.orderId,
+            product_id: reviewItem.productId,
+            rating: rating,
+            body: reviewBody
+        }, {
+            onSuccess: () => {
+                setReviewItem(null);
+                setRating(5);
+                setReviewBody('');
+                setShowFlash(true);
+            },
+            onFinish: () => {
+                setIsSubmittingReview(false);
             }
         });
     };
@@ -70,6 +100,14 @@ export default function OrdersPage({ auth, orders = [] }) {
 
             <div className="bg-[#F8F9FA] min-h-screen font-['Poppins'] py-8 md:py-12">
                 <div className="max-w-[1000px] mx-auto px-4 md:px-6">
+                    {/* Flash Alert */}
+                    {flash?.message && showFlash && (
+                        <div className="mb-6 bg-zinc-950 text-white text-xs font-bold uppercase tracking-wider px-6 py-4 rounded-xl flex items-center justify-between shadow-lg animate-in fade-in duration-200">
+                            <span>{flash.message}</span>
+                            <button onClick={() => setShowFlash(false)} className="text-white/60 hover:text-white text-xs ml-4">✕</button>
+                        </div>
+                    )}
+
                     {/* Header */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                         <div>
@@ -166,6 +204,22 @@ export default function OrdersPage({ auth, orders = [] }) {
                                                                 <p className="text-[10px] text-zinc-500 font-bold uppercase mt-1">
                                                                     Qty: {item.quantity} · Rp {Number(item.price_at_purchase || item.price).toLocaleString('id-ID')} / item
                                                                 </p>
+                                                                {order.status === 'completed' && (
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            setReviewItem({
+                                                                                orderId: order.id,
+                                                                                productId: item.product_id,
+                                                                                productName: item.product?.name
+                                                                            });
+                                                                            setRating(5);
+                                                                            setReviewBody('');
+                                                                        }}
+                                                                        className="mt-2.5 px-3 py-1.5 border border-zinc-900 hover:bg-zinc-900 hover:text-white rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all"
+                                                                    >
+                                                                        Beri Ulasan
+                                                                    </button>
+                                                                )}
                                                             </div>
                                                             <div className="text-right shrink-0">
                                                                 <p className="text-xs font-bold text-zinc-900">
@@ -283,6 +337,78 @@ export default function OrdersPage({ auth, orders = [] }) {
                             </button>
                         </div>
                     </div>
+                </div>
+            {/* Review Modal */}
+            {reviewItem && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => !isSubmittingReview && setReviewItem(null)}></div>
+                    <form 
+                        onSubmit={handleSubmitReview}
+                        className="relative bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl border border-zinc-100 space-y-6 animate-in fade-in zoom-in-95 duration-200"
+                    >
+                        <div className="text-center space-y-2">
+                            <h3 className="text-lg font-black uppercase text-zinc-900 tracking-tight">Tulis Ulasan</h3>
+                            <p className="text-zinc-500 text-[10px] font-bold uppercase leading-relaxed max-w-xs mx-auto truncate">
+                                {reviewItem.productName}
+                            </p>
+                        </div>
+
+                        {/* Star Rating Selector */}
+                        <div className="flex flex-col items-center gap-2">
+                            <label className="text-[10px] font-black uppercase tracking-wider text-zinc-400">Rating Produk</label>
+                            <div className="flex gap-1.5">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                    <button
+                                        type="button"
+                                        key={star}
+                                        onClick={() => setRating(star)}
+                                        className="p-1 text-amber-400 hover:scale-110 active:scale-95 transition-transform"
+                                    >
+                                        <Star 
+                                            className="w-8 h-8" 
+                                            fill={star <= rating ? 'currentColor' : 'none'} 
+                                            strokeWidth={2}
+                                        />
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Review Body */}
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-wider text-zinc-400">Ulasan Anda</label>
+                            <textarea
+                                required
+                                rows={4}
+                                value={reviewBody}
+                                onChange={e => setReviewBody(e.target.value)}
+                                placeholder="Bagikan pengalaman Anda menggunakan produk preloved ini..."
+                                className="w-full bg-zinc-50 text-zinc-900 text-xs border-transparent rounded-xl py-3.5 px-4 focus:bg-white focus:ring-2 focus:ring-zinc-900 transition-all outline-none resize-none"
+                            />
+                        </div>
+
+                        <div className="flex gap-3 pt-2">
+                            <button
+                                type="button"
+                                disabled={isSubmittingReview}
+                                onClick={() => setReviewItem(null)}
+                                className="flex-1 bg-white border-2 border-zinc-200 hover:bg-zinc-50 text-zinc-800 py-3.5 rounded-xl font-bold uppercase text-[11px] tracking-wider transition-all disabled:opacity-50"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={isSubmittingReview || !reviewBody.trim()}
+                                className="flex-1 bg-zinc-950 hover:bg-zinc-855 text-white py-3.5 rounded-xl font-bold uppercase text-[11px] tracking-wider transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
+                            >
+                                {isSubmittingReview ? (
+                                    <><Loader2 className="w-4 h-4 animate-spin" /> Mengirim...</>
+                                ) : (
+                                    'Kirim Ulasan'
+                                )}
+                            </button>
+                        </div>
+                    </form>
                 </div>
             )}
         </MarketplaceLayout>
