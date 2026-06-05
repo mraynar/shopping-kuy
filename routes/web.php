@@ -8,6 +8,7 @@ use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\TransactionsController;
 use App\Http\Controllers\Auth\GoogleAuthController;
+use App\Http\Controllers\SellerController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -46,6 +47,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/messages', function () {
         return Inertia::render('Messages/Index');
     })->name('messages');
+
+    // Seller Routes
+    Route::prefix('seller')->name('seller.')->group(function () {
+        Route::get('/dashboard', [SellerController::class, 'dashboard'])->name('dashboard');
+        Route::get('/orders', [SellerController::class, 'orders'])->name('orders');
+        Route::post('/orders/{order}/status', [SellerController::class, 'updateOrderStatus'])->name('orders.update-status');
+    });
 });
 
 require __DIR__ . '/auth.php';
