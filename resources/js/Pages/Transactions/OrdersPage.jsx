@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import MarketplaceLayout from '@/Layouts/MarketplaceLayout';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { 
     ChevronDown, ChevronUp, Package, Truck, Calendar, 
-    CreditCard, MapPin, ClipboardList, ExternalLink, RefreshCw 
+    CreditCard, MapPin, ClipboardList, ExternalLink, RefreshCw,
+    AlertTriangle, Loader2
 } from 'lucide-react';
 
 export default function OrdersPage({ auth, orders = [] }) {
     const [expandedOrderId, setExpandedOrderId] = useState(null);
+    const [orderToCancel, setOrderToCancel] = useState(null);
+    const [isCancelling, setIsCancelling] = useState(false);
 
     const toggleExpand = (id) => {
         if (expandedOrderId === id) {
@@ -15,6 +18,19 @@ export default function OrdersPage({ auth, orders = [] }) {
         } else {
             setExpandedOrderId(id);
         }
+    };
+
+    const handleCancelOrder = () => {
+        if (!orderToCancel) return;
+        setIsCancelling(true);
+        router.post(`/orders/${orderToCancel}/cancel`, {}, {
+            onSuccess: () => {
+                setOrderToCancel(null);
+            },
+            onFinish: () => {
+                setIsCancelling(false);
+            }
+        });
     };
 
     const getStatusStyle = (status) => {
@@ -211,9 +227,16 @@ export default function OrdersPage({ auth, orders = [] }) {
                                                     </div>
                                                 </div>
 
-                                                {/* Actions Placeholder (will be added in later commits) */}
-                                                <div className="py-3 flex justify-end gap-3 empty:hidden">
-                                                    {/* Commits 5 and 13 will hook into this area */}
+                                                {/* Actions Section */}
+                                                <div className="py-3 flex justify-end gap-3 border-t border-zinc-100 mt-4 pt-4">
+                                                    {order.status === 'pending' && (
+                                                        <button 
+                                                            onClick={() => setOrderToCancel(order.id)}
+                                                            className="px-4 py-2 border-2 border-red-200 hover:border-red-500 text-red-650 hover:text-red-700 rounded-xl text-xs font-bold uppercase tracking-wider transition-all"
+                                                        >
+                                                            Batalkan Pesanan
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
                                         )}
@@ -224,6 +247,44 @@ export default function OrdersPage({ auth, orders = [] }) {
                     )}
                 </div>
             </div>
+
+            {/* Custom Confirm Cancel Modal */}
+            {orderToCancel && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => !isCancelling && setOrderToCancel(null)}></div>
+                    <div className="relative bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl border border-zinc-100 text-center space-y-6 animate-in fade-in zoom-in-95 duration-200">
+                        <div className="mx-auto w-14 h-14 bg-red-50 rounded-full flex items-center justify-center text-red-500">
+                            <AlertTriangle className="w-6 h-6 animate-bounce" />
+                        </div>
+                        <div className="space-y-2">
+                            <h3 className="text-lg font-black uppercase text-zinc-900 tracking-tight">Batalkan Pesanan?</h3>
+                            <p className="text-zinc-550 text-xs leading-relaxed font-medium uppercase">
+                                Apakah Anda yakin ingin membatalkan pesanan ini? Tindakan ini tidak dapat dibatalkan.
+                            </p>
+                        </div>
+                        <div className="flex gap-3 pt-2">
+                            <button
+                                disabled={isCancelling}
+                                onClick={() => setOrderToCancel(null)}
+                                className="flex-1 bg-white border-2 border-zinc-200 hover:bg-zinc-50 text-zinc-800 py-3.5 rounded-xl font-bold uppercase text-[11px] tracking-wider transition-all disabled:opacity-50"
+                            >
+                                Kembali
+                            </button>
+                            <button
+                                disabled={isCancelling}
+                                onClick={handleCancelOrder}
+                                className="flex-1 bg-red-650 hover:bg-red-750 text-white py-3.5 rounded-xl font-bold uppercase text-[11px] tracking-wider transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
+                            >
+                                {isCancelling ? (
+                                    <><Loader2 className="w-4 h-4 animate-spin" /> Membatalkan...</>
+                                ) : (
+                                    'Ya, Batalkan'
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </MarketplaceLayout>
     );
 }
