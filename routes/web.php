@@ -10,6 +10,8 @@ use App\Http\Controllers\TransactionsController;
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\SellerController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminShopController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -56,6 +58,14 @@ Route::middleware('auth')->group(function () {
         Route::get('/orders', [SellerController::class, 'orders'])->name('orders');
         Route::post('/orders/{order}/status', [SellerController::class, 'updateOrderStatus'])->name('orders.update-status');
         Route::post('/orders/{order}/waybill', [SellerController::class, 'inputWaybill'])->name('orders.waybill');
+    });
+
+    // Admin Routes
+    Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
+        Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/shops', [AdminShopController::class, 'index'])->name('shops.index');
+        Route::post('/shops/{shop}/approve', [AdminShopController::class, 'approve'])->name('shops.approve');
+        Route::post('/shops/{shop}/reject', [AdminShopController::class, 'reject'])->name('shops.reject');
     });
 });
 
