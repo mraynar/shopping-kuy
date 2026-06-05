@@ -53,6 +53,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/dashboard', [SellerController::class, 'dashboard'])->name('dashboard');
         Route::get('/orders', [SellerController::class, 'orders'])->name('orders');
         Route::post('/orders/{order}/status', [SellerController::class, 'updateOrderStatus'])->name('orders.update-status');
+        Route::post('/orders/{order}/waybill', [SellerController::class, 'inputWaybill'])->name('orders.waybill');
     });
 });
 

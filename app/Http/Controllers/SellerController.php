@@ -75,4 +75,36 @@ class SellerController extends Controller
 
         return redirect()->back()->with('message', 'Status pesanan berhasil diperbarui.');
     }
+
+    /**
+     * Input nomor resi/waybill untuk pesanan.
+     */
+    public function inputWaybill(Request $request, Order $order): RedirectResponse
+    {
+        $request->validate([
+            'waybill' => 'required|string|max:100'
+        ]);
+
+        $user = Auth::user();
+        $shop = $user->shop;
+
+        if (!$shop) {
+            return redirect()->back()->with('message', 'Akses ditolak.');
+        }
+
+        // Pastikan order ini memiliki item yang berasal dari toko milik seller ini
+        $hasProduct = $order->items()->whereHas('product', function ($query) use ($shop) {
+            $query->where('shop_id', $shop->id);
+        })->exists();
+
+        if (!$hasProduct) {
+            return redirect()->back()->with('message', 'Akses ditolak.');
+        }
+
+        $order->waybill = $request->waybill;
+        $order->status = 'shipping';
+        $order->save();
+
+        return redirect()->back()->with('message', 'Nomor resi berhasil di-update dan pesanan dikirim.');
+    }
 }
