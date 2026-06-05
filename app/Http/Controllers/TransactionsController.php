@@ -308,6 +308,19 @@ class TransactionsController extends Controller
         }
     }
 
+    public function orders(): Response
+    {
+        $orders = Order::query()
+            ->with(['items.product.shop'])
+            ->where('user_id', Auth::id())
+            ->latest()
+            ->get();
+
+        return Inertia::render('Transactions/OrdersPage', [
+            'orders' => $orders
+        ]);
+    }
+
     public function success(): Response
     {
         return Inertia::render('Transactions/SuccessPage');
