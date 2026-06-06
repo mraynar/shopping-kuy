@@ -23,7 +23,7 @@ return new class extends Migration
 
             $table->enum('status', ['pending', 'paid', 'packing', 'shipping', 'completed', 'cancelled'])->default('pending');
 
-            $table->string('snap_token')->nullable();
+            $table->text('snap_token')->nullable();
             $table->string('payment_type')->nullable();
 
             $table->text('shipping_address');
