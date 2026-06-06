@@ -23,6 +23,7 @@ Route::get('/location/provinces', [LocationController::class, 'getProvinces']);
 Route::get('/location/cities/{province_id}', [LocationController::class, 'getCities']);
 Route::get('/location/districts/{city_id}', [LocationController::class, 'getDistricts']);
 Route::get('/location/subdistricts/{district_id}', [LocationController::class, 'getSubDistricts']);
+Route::get('/location/search-destination', [LocationController::class, 'searchDestination'])->name('location.search-destination');
 
 Route::post('/midtrans/notification', [TransactionsController::class, 'midtransNotification'])->name('midtrans.notification');
 
