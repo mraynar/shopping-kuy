@@ -83,11 +83,11 @@ class LocationController extends Controller
     public function searchDestination(Request $request)
     {
         $search = $request->query('search', '');
-        $limit = $request->query('limit', 10);
+        $limit  = $request->query('limit', 10);
 
         try {
             $response = Http::withHeaders([
-                'key' => env('RAJAONGKIR_API_KEY'),
+                'key'    => env('RAJAONGKIR_API_KEY'),
                 'Accept' => 'application/json',
             ])->get('https://rajaongkir.komerce.id/api/v1/destination/domestic-destination', [
                 'search' => $search,
@@ -96,7 +96,17 @@ class LocationController extends Controller
             ]);
 
             $data = $response->json();
-            return response()->json($data['data'] ?? []);
+
+            // Normalize response: pastikan selalu ada field id & label
+            // sesuai kebutuhan PersonalInfo.jsx untuk menyimpan rajaongkir_destination_id
+            $destinations = collect($data['data'] ?? [])->map(function ($item) {
+                return [
+                    'id'    => $item['id'] ?? null,
+                    'label' => $item['label'] ?? $item['destination_name'] ?? '',
+                ];
+            })->filter(fn($d) => $d['id'] !== null)->values()->toArray();
+
+            return response()->json($destinations);
         } catch (\Throwable $e) {
             Log::error('RajaOngkir Search Destination Error: ' . $e->getMessage());
             return response()->json([]);
