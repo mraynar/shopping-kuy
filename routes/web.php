@@ -48,6 +48,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/checkout/ongkir', [TransactionsController::class, 'getShippingCost'])->name('checkout.ongkir');
     Route::get('/success', [TransactionsController::class, 'success'])->name('checkout.success');
     Route::get('/orders', [TransactionsController::class, 'orders'])->name('orders.index');
+    Route::post('/orders/{id}/cancel', [TransactionsController::class, 'cancelOrder'])->name('orders.cancel');
     Route::get('/messages', function () {
         return Inertia::render('Messages/Index');
     })->name('messages');
