@@ -79,7 +79,7 @@ class TransactionsController extends Controller
     public function getShippingCost(Request $request)
     {
         $request->validate([
-            'destination' => 'required|integer',
+            'destination' => 'required',
             'weight'      => 'required|integer',
             'courier'     => 'required|string',
         ]);
@@ -96,16 +96,35 @@ class TransactionsController extends Controller
 
             $data = $response->json();
 
-            if ($data['meta']['code'] !== 200) {
+            Log::info('RAJAONGKIR COST RESPONSE', [
+                'status'     => $response->status(),
+                'meta_code'  => $data['meta']['code'] ?? null,
+                'data_count' => count($data['data'] ?? []),
+            ]);
+
+            if (($data['meta']['code'] ?? 0) !== 200) {
+                Log::warning('RAJAONGKIR COST: meta code not 200', $data);
                 return response()->json([], 422);
             }
 
-            return response()->json($data['data'] ?? []);
+            // Komerce API mengembalikan flat array per layanan
+            // Normalize ke format: [{service, description, cost, etd}]
+            $services = collect($data['data'] ?? [])->map(function ($item) {
+                return [
+                    'service'     => $item['courier_service_code'] ?? $item['service'] ?? '',
+                    'description' => $item['description'] ?? '',
+                    'cost'        => (int) ($item['cost'] ?? 0),
+                    'etd'         => $item['etd'] ?? '-',
+                ];
+            })->values()->toArray();
+
+            return response()->json($services);
         } catch (\Throwable $e) {
             Log::error('RajaOngkir Cost Error: ' . $e->getMessage());
             return response()->json([], 500);
         }
     }
+
 
     public function placeOrder(Request $request)
     {
