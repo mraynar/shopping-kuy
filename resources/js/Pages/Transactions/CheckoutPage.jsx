@@ -159,16 +159,19 @@ export default function CheckoutPage({ auth, cartItems: propCartItems = [] }) {
             const res = await axios.get(route('checkout.ongkir'), {
                 params: { destination: destinationId, weight: totalWeight, courier: courier.id },
             });
-            const services = (res.data || []).flatMap(c =>
-                (c.costs || []).map(s => ({
-                    courier:     courier.id.toUpperCase(),
-                    service:     s.service,
-                    description: s.description,
-                    cost:        s.cost?.[0]?.value ?? 0,
-                    etd:         s.cost?.[0]?.etd ?? '-',
-                }))
-            );
+            // Backend (setelah Commit #6) mengembalikan flat array:
+            // [{service, description, cost, etd}]
+            const services = (res.data || []).map(s => ({
+                courier:     courier.id.toUpperCase(),
+                service:     s.service,
+                description: s.description,
+                cost:        s.cost ?? 0,
+                etd:         s.etd ?? '-',
+            }));
             setShippingOptions(services);
+            if (services.length === 0) {
+                setError('Tidak ada layanan pengiriman tersedia untuk rute ini.');
+            }
         } catch {
             setError('Gagal mengambil data ongkir.');
         } finally {
