@@ -57,53 +57,24 @@ export default function CheckoutPage({ auth, cartItems: propCartItems = [] }) {
     const snapLoaded = useRef(false);
 
         useEffect(() => {
-
-            // Snap sudah tersedia di window (sudah load sebelumnya)
+            // Script Midtrans Snap sudah dimuat oleh app.blade.php
+            // Tidak perlu inject ulang — cukup cek window.snap
             if (window.snap) {
                 snapLoaded.current = true;
                 return;
             }
 
-            const existingScript = document.getElementById('midtrans-snap-script');
-
-            // Script sudah ada di DOM, attach onload handler tanpa hapus script
-            if (existingScript) {
-                existingScript.onload = () => {
-                    console.log('MIDTRANS SNAP LOADED (existing script)');
+            // Fallback: blade script mungkin belum selesai execute, poll sekali setelah 500ms
+            const timer = setTimeout(() => {
+                if (window.snap) {
                     snapLoaded.current = true;
-                };
-                return;
-            }
+                    console.log('MIDTRANS SNAP READY (blade)');
+                } else {
+                    console.error('window.snap tidak tersedia — periksa data-client-key di app.blade.php');
+                }
+            }, 500);
 
-            // Buat script baru
-            const script = document.createElement('script');
-
-            script.id = 'midtrans-snap-script';
-
-            script.src = 'https://app.sandbox.midtrans.com/snap/snap.js';
-
-            script.setAttribute(
-                'data-client-key',
-                import.meta.env.VITE_MIDTRANS_CLIENT_KEY
-            );
-
-            script.async = true;
-
-            script.onload = () => {
-                console.log('MIDTRANS SNAP LOADED');
-                snapLoaded.current = true;
-            };
-
-            script.onerror = () => {
-                console.error('GAGAL LOAD MIDTRANS SNAP SCRIPT');
-            };
-
-            document.head.appendChild(script);
-
-            return () => {
-                snapLoaded.current = false;
-            };
-
+            return () => clearTimeout(timer);
         }, []);
 
     const { cartItems: storeItems } = useCartStore();
