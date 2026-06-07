@@ -137,7 +137,7 @@ export default function CheckoutPage({ auth, cartItems: propCartItems = [] }) {
             .filter(Boolean).join(', ')
         : null;
 
-    const destinationId = u?.rajaongkir_destination_id || u?.subdistrict_id;
+    const destinationId = u?.rajaongkir_destination_id ?? null;
 
     const fetchShipping = async (courier) => {
         if (!destinationId) {
