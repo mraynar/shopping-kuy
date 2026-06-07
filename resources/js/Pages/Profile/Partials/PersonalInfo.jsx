@@ -146,7 +146,7 @@ export default function PersonalInfo({ auth }) {
         setRoDestinations([]);
         setSelectedRoDestination(null);
         try {
-            const res = await axios.get('/location/search-destination', {
+            const res = await axios.get(route('location.search-destination'), {
                 params: { search: `${subdistrictName} ${cityName}`, limit: 8 }
             });
             setRoDestinations(res.data || []);
