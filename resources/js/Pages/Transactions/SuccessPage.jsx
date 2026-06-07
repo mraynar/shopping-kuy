@@ -3,7 +3,7 @@ import MarketplaceLayout from '@/Layouts/MarketplaceLayout';
 import { Head, Link } from '@inertiajs/react';
 import { CheckCircle, ArrowRight, ShoppingBag, ClipboardList, Copy, Check } from 'lucide-react';
 
-export default function SuccessPage({ auth, order }) {
+export default function SuccessPage({ auth, order = null }) {
     const [copied, setCopied] = React.useState(false);
 
     const handleCopyOrderNumber = () => {
@@ -103,11 +103,18 @@ export default function SuccessPage({ auth, order }) {
                                 </div>
                             </div>
                         ) : (
-                            <div className="border border-zinc-200/60 rounded-2xl bg-zinc-50/50 p-6 text-center space-y-2">
-                                <p className="text-sm font-bold text-zinc-800 uppercase">Pesanan Anda Berhasil Ditempatkan!</p>
+                            <div className="border border-zinc-200/60 rounded-2xl bg-zinc-50/50 p-6 text-center space-y-3">
+                                <p className="text-sm font-bold text-zinc-800 uppercase">Pesanan Anda Berhasil Ditempatkan! 🎉</p>
                                 <p className="text-xs text-zinc-500 leading-relaxed max-w-md mx-auto">
-                                    Anda dapat melihat rincian lengkap pesanan, melacak status pengiriman, serta melakukan konfirmasi penerimaan melalui halaman riwayat pesanan Anda.
+                                    Anda dapat melihat rincian lengkap pesanan, melacak status pengiriman,
+                                    serta melakukan konfirmasi penerimaan melalui halaman riwayat pesanan.
                                 </p>
+                                <Link
+                                    href="/orders"
+                                    className="inline-block mt-1 bg-zinc-900 text-white text-[11px] font-bold uppercase px-5 py-2.5 rounded-lg hover:bg-zinc-800 transition-all"
+                                >
+                                    Lihat Riwayat Pesanan →
+                                </Link>
                             </div>
                         )}
 
