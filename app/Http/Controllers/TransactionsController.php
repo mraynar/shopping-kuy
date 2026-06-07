@@ -80,19 +80,26 @@ class TransactionsController extends Controller
     {
         $request->validate([
             'destination' => 'required',
-            'weight'      => 'required|integer',
+            'weight'      => 'required|integer|min:1',
             'courier'     => 'required|string',
         ]);
 
+        // RajaOngkir Komerce minimum weight adalah 1000g
+        $weight = max((int) $request->weight, 1000);
+
         try {
-            $response = Http::withHeaders([
-                'key' => env('RAJAONGKIR_API_KEY'),
-            ])->asForm()->post('https://rajaongkir.komerce.id/api/v1/calculate/domestic-cost', [
+            $payload = [
                 'origin'      => env('RAJAONGKIR_ORIGIN_ID'),
                 'destination' => $request->destination,
-                'weight'      => $request->weight,
+                'weight'      => $weight,
                 'courier'     => $request->courier,
-            ]);
+            ];
+
+            Log::info('RAJAONGKIR COST REQUEST', $payload);
+
+            $response = Http::withHeaders([
+                'key' => config('services.rajaongkir.key'),
+            ])->asForm()->post('https://rajaongkir.komerce.id/api/v1/calculate/domestic-cost', $payload);
 
             $data = $response->json();
 
@@ -107,8 +114,7 @@ class TransactionsController extends Controller
                 return response()->json([], 422);
             }
 
-            // Komerce API mengembalikan flat array per layanan
-            // Normalize ke format: [{service, description, cost, etd}]
+            // Normalize ke format flat: [{service, description, cost, etd}]
             $services = collect($data['data'] ?? [])->map(function ($item) {
                 return [
                     'service'     => $item['courier_service_code'] ?? $item['service'] ?? '',
@@ -124,7 +130,6 @@ class TransactionsController extends Controller
             return response()->json([], 500);
         }
     }
-
 
     public function placeOrder(Request $request)
     {
