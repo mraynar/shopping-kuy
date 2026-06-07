@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MarketplaceLayout from '@/Layouts/MarketplaceLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import {
@@ -18,6 +18,13 @@ import useCartStore from '@/Pages/Transactions/useCartStore';
 export default function CartPage({ auth, cartItems = [] }) {
     const { setCartCount } = useCartStore();
     const [deleteId, setDeleteId] = useState(null);
+
+    // Sync cart count ke zustand store saat halaman dimuat
+    useEffect(() => {
+        if (typeof auth?.cart_count === 'number') {
+            setCartCount(auth.cart_count);
+        }
+    }, [auth?.cart_count]);
 
     const subtotal = cartItems.reduce((acc, item) => acc + (Number(item.price) * (item.quantity || 1)), 0);
 
