@@ -127,8 +127,10 @@ export default function CheckoutPage({ auth, cartItems: propCartItems = [] }) {
         setSelectedService(null);
         setError(null);
         try {
-            const res = await axios.get(route('checkout.ongkir'), {
-                params: { destination: destinationId, weight: totalWeight, courier: courier.id },
+            const res = await axios.post(route('checkout.ongkir'), {
+                destination: destinationId,
+                weight:      totalWeight,
+                courier:     courier.id,
             });
             // Backend (setelah Commit #6) mengembalikan flat array:
             // [{service, description, cost, etd}]
