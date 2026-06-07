@@ -58,6 +58,7 @@ export default function CheckoutPage({ auth, cartItems: propCartItems = [] }) {
 
         useEffect(() => {
 
+            // Snap sudah tersedia di window (sudah load sebelumnya)
             if (window.snap) {
                 snapLoaded.current = true;
                 return;
@@ -65,10 +66,16 @@ export default function CheckoutPage({ auth, cartItems: propCartItems = [] }) {
 
             const existingScript = document.getElementById('midtrans-snap-script');
 
+            // Script sudah ada di DOM, attach onload handler tanpa hapus script
             if (existingScript) {
-                existingScript.remove();
+                existingScript.onload = () => {
+                    console.log('MIDTRANS SNAP LOADED (existing script)');
+                    snapLoaded.current = true;
+                };
+                return;
             }
 
+            // Buat script baru
             const script = document.createElement('script');
 
             script.id = 'midtrans-snap-script';
@@ -88,7 +95,7 @@ export default function CheckoutPage({ auth, cartItems: propCartItems = [] }) {
             };
 
             script.onerror = () => {
-                console.log('GAGAL LOAD MIDTRANS');
+                console.error('GAGAL LOAD MIDTRANS SNAP SCRIPT');
             };
 
             document.head.appendChild(script);
