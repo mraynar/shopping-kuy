@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import MarketplaceLayout from '@/Layouts/MarketplaceLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { 
@@ -18,6 +19,7 @@ export default function OrdersPage({ auth, orders = [], flash }) {
     const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
     const [showFlash, setShowFlash] = useState(true);
+    const [repayingOrderId, setRepayingOrderId] = useState(null);
 
     const toggleExpand = (id) => {
         if (expandedOrderId === id) {
@@ -61,6 +63,26 @@ export default function OrdersPage({ auth, orders = [], flash }) {
                 setIsSubmittingReview(false);
             }
         });
+    };
+
+    const handleRepay = async (orderId) => {
+        setRepayingOrderId(orderId);
+        try {
+            const res = await axios.post(route('orders.repay', { id: orderId }));
+            if (res.data.success && window.snap) {
+                window.snap.pay(res.data.snap_token, {
+                    onSuccess: () => { setRepayingOrderId(null); router.reload(); },
+                    onPending: () => { setRepayingOrderId(null); },
+                    onError:   () => { setRepayingOrderId(null); },
+                    onClose:   () => { setRepayingOrderId(null); },
+                });
+            } else {
+                setRepayingOrderId(null);
+            }
+        } catch (e) {
+            console.error('Repay error:', e);
+            setRepayingOrderId(null);
+        }
     };
 
     const getStatusStyle = (status) => {
@@ -284,12 +306,21 @@ export default function OrdersPage({ auth, orders = [], flash }) {
                                                 {/* Actions Section */}
                                                 <div className="py-3 flex justify-end gap-3 border-t border-zinc-100 mt-4 pt-4">
                                                     {order.status === 'pending' && (
-                                                        <button 
-                                                            onClick={() => setOrderToCancel(order.id)}
-                                                            className="px-4 py-2 border-2 border-red-200 hover:border-red-500 text-red-650 hover:text-red-700 rounded-xl text-xs font-bold uppercase tracking-wider transition-all"
-                                                        >
-                                                            Batalkan Pesanan
-                                                        </button>
+                                                        <>
+                                                            <button
+                                                                onClick={() => handleRepay(order.id)}
+                                                                disabled={repayingOrderId === order.id}
+                                                                className="px-4 py-2 bg-amber-500 hover:bg-amber-600 disabled:opacity-60 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all"
+                                                            >
+                                                                {repayingOrderId === order.id ? 'Memproses...' : '💳 Bayar Sekarang'}
+                                                            </button>
+                                                            <button 
+                                                                onClick={() => setOrderToCancel(order.id)}
+                                                                className="px-4 py-2 border-2 border-red-200 hover:border-red-500 text-red-650 hover:text-red-700 rounded-xl text-xs font-bold uppercase tracking-wider transition-all"
+                                                            >
+                                                                Batalkan Pesanan
+                                                            </button>
+                                                        </>
                                                     )}
                                                 </div>
                                             </div>
