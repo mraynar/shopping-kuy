@@ -262,9 +262,24 @@ class TransactionsController extends Controller
 
         try {
 
-            Log::info('MIDTRANS PARAMS', $params);
+            Log::info('MIDTRANS PARAMS', [
+                'order_number' => $order->order_number,
+                'gross_amount' => $grossAmount,
+                'item_count'   => count($itemDetails),
+                'customer'     => [
+                    'name'  => $user->name,
+                    'email' => $user->email,
+                    'phone' => $user->phone ?? '(kosong)',
+                ],
+                'params'       => $params,
+            ]);
 
             $snapToken = Snap::getSnapToken($params);
+
+            Log::info('MIDTRANS SNAP TOKEN BERHASIL', [
+                'order_number' => $order->order_number,
+                'token_length' => strlen($snapToken),
+            ]);
 
             $order->update([
                 'snap_token' => $snapToken
@@ -283,7 +298,14 @@ class TransactionsController extends Controller
             ]);
         } catch (\Throwable $e) {
 
-            Log::error('MIDTRANS ERROR: ' . $e->getMessage());
+            Log::error('MIDTRANS ERROR', [
+                'order_number' => $order->order_number ?? null,
+                'message'      => $e->getMessage(),
+                'code'         => $e->getCode(),
+                'file'         => $e->getFile(),
+                'line'         => $e->getLine(),
+                'params'       => $params ?? [],
+            ]);
 
             return response()->json([
                 'success' => false,
