@@ -48,7 +48,7 @@ class ProfileController extends Controller
             'district_id'                  => 'nullable',
             'subdistrict_id'               => 'nullable',
             'postal_code'                  => 'required|numeric',
-            'rajaongkir_destination_id'    => 'nullable|integer',
+            'rajaongkir_destination_id'    => 'nullable|string|max:50',
             'rajaongkir_destination_label' => 'nullable|string|max:500',
             'avatar'                       => 'nullable',
         ]);
