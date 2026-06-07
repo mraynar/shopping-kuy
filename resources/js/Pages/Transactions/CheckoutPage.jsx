@@ -281,7 +281,7 @@ export default function CheckoutPage({ auth, cartItems: propCartItems = [] }) {
         .find(o => o.id === selectedPayment)?.label || null;
 
     const visibleServices = showAllServices ? shippingOptions : shippingOptions.slice(0, 3);
-    const canOrder = checkedItems.length > 0 && fullAddress && selectedService;
+    const canOrder = checkedItems.length > 0 && fullAddress && selectedService && !!destinationId;
 
     return (
         <MarketplaceLayout auth={auth}>
@@ -594,6 +594,7 @@ export default function CheckoutPage({ auth, cartItems: propCartItems = [] }) {
                                     <div className="space-y-1 text-center">
                                         {checkedItems.length === 0 && <p className="text-[10px] text-amber-600 font-bold uppercase tracking-wider">· Pilih minimal 1 item</p>}
                                         {!fullAddress && <p className="text-[10px] text-amber-600 font-bold uppercase tracking-wider">· Lengkapi alamat pengiriman</p>}
+                                        {!destinationId && <p className="text-[10px] text-amber-600 font-bold uppercase tracking-wider">· Konfirmasi titik pengiriman di profil</p>}
                                         {!selectedService && <p className="text-[10px] text-amber-600 font-bold uppercase tracking-wider">· Pilih kurir & layanan</p>}
                                         {!selectedPayment && <p className="text-[10px] text-amber-600 font-bold uppercase tracking-wider">· Pilih metode pembayaran</p>}
                                     </div>
