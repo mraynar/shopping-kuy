@@ -6,18 +6,21 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Mengubah tipe kolom rajaongkir_destination_id dari unsignedBigInteger ke string
+     * agar bisa menyimpan ID format string dari RajaOngkir Komerce API.
+     */
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('rajaongkir_destination_id', 50)->nullable()->after('postal_code');
-            $table->string('rajaongkir_destination_label')->nullable()->after('rajaongkir_destination_id');
+            $table->string('rajaongkir_destination_id', 50)->nullable()->change();
         });
     }
 
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn(['rajaongkir_destination_id', 'rajaongkir_destination_label']);
+            $table->unsignedBigInteger('rajaongkir_destination_id')->nullable()->change();
         });
     }
 };
