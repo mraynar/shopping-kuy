@@ -5,6 +5,7 @@ import { CheckCircle, ArrowRight, ShoppingBag, ClipboardList, Copy, Check } from
 
 export default function SuccessPage({ auth, order = null }) {
     const [copied, setCopied] = React.useState(false);
+    const [paying, setPaying] = React.useState(false);
 
     const handleCopyOrderNumber = () => {
         if (order?.order_number) {
@@ -13,6 +14,29 @@ export default function SuccessPage({ auth, order = null }) {
             setTimeout(() => setCopied(false), 2000);
         }
     };
+
+    const handleRepay = () => {
+        if (!order?.snap_token || !window.snap) return;
+        setPaying(true);
+        window.snap.pay(order.snap_token, {
+            onSuccess: () => { setPaying(false); window.location.reload(); },
+            onPending: () => { setPaying(false); },
+            onError:   () => { setPaying(false); },
+            onClose:   () => { setPaying(false); },
+        });
+    };
+
+    const isPending = order?.status === 'pending';
+
+    const statusConfig = {
+        pending:   { label: 'Menunggu Pembayaran', color: 'bg-amber-100 text-amber-700' },
+        paid:      { label: 'Pembayaran Berhasil',  color: 'bg-emerald-100 text-emerald-700' },
+        packing:   { label: 'Sedang Dikemas',       color: 'bg-blue-100 text-blue-700' },
+        shipping:  { label: 'Dalam Pengiriman',     color: 'bg-indigo-100 text-indigo-700' },
+        completed: { label: 'Pesanan Selesai',      color: 'bg-zinc-100 text-zinc-700' },
+        cancelled: { label: 'Dibatalkan',           color: 'bg-red-100 text-red-700' },
+    };
+    const status = statusConfig[order?.status] ?? null;
 
     return (
         <MarketplaceLayout auth={auth}>
@@ -43,7 +67,13 @@ export default function SuccessPage({ auth, order = null }) {
                                         <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Nomor Pesanan</p>
                                         <p className="text-sm font-bold text-zinc-900 uppercase tracking-tight mt-0.5">{order.order_number}</p>
                                     </div>
-                                    <button 
+                                    <div className="flex items-center gap-2">
+                                        {status && (
+                                            <span className={`text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full ${status.color}`}>
+                                                {status.label}
+                                            </span>
+                                        )}
+                                        <button 
                                         onClick={handleCopyOrderNumber}
                                         className="p-2 hover:bg-zinc-200/50 rounded-lg transition-colors text-zinc-500 hover:text-zinc-900"
                                         title="Salin Nomor Pesanan"
@@ -101,6 +131,17 @@ export default function SuccessPage({ auth, order = null }) {
                                         </span>
                                     </div>
                                 </div>
+
+                                {/* Repay Button jika masih pending */}
+                                {isPending && order.snap_token && (
+                                    <button
+                                        onClick={handleRepay}
+                                        disabled={paying}
+                                        className="w-full bg-amber-500 hover:bg-amber-600 disabled:opacity-60 text-white py-3.5 rounded-xl font-bold uppercase text-[12px] tracking-widest transition-all active:scale-[0.98]"
+                                    >
+                                        {paying ? 'Membuka Pembayaran...' : '💳 Selesaikan Pembayaran'}
+                                    </button>
+                                )}
                             </div>
                         ) : (
                             <div className="border border-zinc-200/60 rounded-2xl bg-zinc-50/50 p-6 text-center space-y-3">
