@@ -340,6 +340,28 @@ class TransactionsController extends Controller
         ]);
     }
 
+    public function cancelOrder(string $id): RedirectResponse
+    {
+        $order = Order::where('id', $id)
+            ->where('user_id', Auth::id())
+            ->first();
+
+        if (!$order) {
+            return redirect()->route('orders.index')
+                ->with('message', 'Pesanan tidak ditemukan.');
+        }
+
+        if ($order->status !== 'pending') {
+            return redirect()->route('orders.index')
+                ->with('message', 'Pesanan tidak dapat dibatalkan karena sudah diproses.');
+        }
+
+        $order->update(['status' => 'cancelled']);
+
+        return redirect()->route('orders.index')
+            ->with('message', 'Pesanan berhasil dibatalkan.');
+    }
+
     public function success(): Response
     {
         return Inertia::render('Transactions/SuccessPage');
