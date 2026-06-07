@@ -304,9 +304,18 @@ export default function CheckoutPage({ auth, cartItems: propCartItems = [] }) {
                     )}
 
                     {!destinationId && (
-                        <div className="mb-6 bg-amber-50 border border-amber-300 text-amber-800 text-[12px] font-bold px-6 py-4 rounded-xl">
-                            ⚠ <code>subdistrict_id</code> / <code>rajaongkir_destination_id</code> tidak ditemukan di <code>auth.user</code>.
-                            Tambahkan kedua field ini di <code>HandleInertiaRequests.php</code> → <code>share()</code>.
+                        <div className="mb-6 bg-amber-50 border border-amber-300 text-amber-800 text-[12px] font-bold px-6 py-4 rounded-xl flex items-start gap-3">
+                            <span className="text-lg shrink-0">⚠️</span>
+                            <div className="space-y-1">
+                                <p className="uppercase tracking-wide">Titik pengiriman belum dikonfirmasi</p>
+                                <p className="text-amber-700 font-medium text-[11px] leading-relaxed">
+                                    Kamu belum memilih titik pengiriman RajaOngkir di profil.
+                                    Pergi ke profil → pilih Kelurahan → konfirmasi titik pengiriman → simpan.
+                                </p>
+                                <Link href={route('profile.index')} className="inline-block mt-2 bg-amber-700 text-white text-[10px] font-bold uppercase px-4 py-2 rounded-lg hover:bg-amber-800 transition-colors">
+                                    Lengkapi Profil Sekarang →
+                                </Link>
+                            </div>
                         </div>
                     )}
 
