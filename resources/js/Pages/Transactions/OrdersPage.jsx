@@ -30,7 +30,7 @@ export default function OrdersPage({ auth, orders = [], flash }) {
     const handleCancelOrder = () => {
         if (!orderToCancel) return;
         setIsCancelling(true);
-        router.post(`/orders/${orderToCancel}/cancel`, {}, {
+        router.post(route('orders.cancel', { id: orderToCancel }), {}, {
             onSuccess: () => {
                 setOrderToCancel(null);
             },
@@ -338,6 +338,8 @@ export default function OrdersPage({ auth, orders = [], flash }) {
                         </div>
                     </div>
                 </div>
+            )}
+
             {/* Review Modal */}
             {reviewItem && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
