@@ -49,6 +49,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/success', [TransactionsController::class, 'success'])->name('checkout.success');
     Route::get('/orders', [TransactionsController::class, 'orders'])->name('orders.index');
     Route::post('/orders/{id}/cancel', [TransactionsController::class, 'cancelOrder'])->name('orders.cancel');
+    Route::post('/orders/{id}/repay', [TransactionsController::class, 'repay'])->name('orders.repay');
     Route::get('/messages', function () {
         return Inertia::render('Messages/Index');
     })->name('messages');

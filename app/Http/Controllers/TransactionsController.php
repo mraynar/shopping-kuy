@@ -391,7 +391,83 @@ class TransactionsController extends Controller
 
     public function success(): Response
     {
-        return Inertia::render('Transactions/SuccessPage');
+        // Kirim order terbaru (pending/paid) ke SuccessPage
+        $order = Order::query()
+            ->with('items.product')
+            ->where('user_id', Auth::id())
+            ->whereIn('status', [Order::STATUS_PENDING, Order::STATUS_PAID])
+            ->latest()
+            ->first();
+
+        return Inertia::render('Transactions/SuccessPage', [
+            'order' => $order,
+        ]);
+    }
+
+    public function repay(string $id): \Illuminate\Http\JsonResponse
+    {
+        $order = Order::query()
+            ->with('items.product')
+            ->where('id', $id)
+            ->where('user_id', Auth::id())
+            ->where('status', Order::STATUS_PENDING)
+            ->first();
+
+        if (!$order) {
+            return response()->json(['success' => false, 'message' => 'Order tidak ditemukan atau sudah diproses.'], 404);
+        }
+
+        // Jika snap_token masih ada, langsung gunakan
+        if ($order->snap_token) {
+            return response()->json([
+                'success'    => true,
+                'snap_token' => $order->snap_token,
+            ]);
+        }
+
+        // Regenerate snap_token jika sudah expired
+        $user = Auth::user();
+
+        Config::$serverKey    = config('services.midtrans.server_key');
+        Config::$isProduction = config('services.midtrans.is_production', false);
+        Config::$isSanitized  = true;
+        Config::$is3ds        = true;
+
+        $itemDetails = $order->items->map(fn($item) => [
+            'id'       => $item->product_id,
+            'price'    => (int) $item->price,
+            'quantity' => (int) $item->quantity,
+            'name'     => mb_substr($item->product->name ?? 'Produk', 0, 50),
+        ])->toArray();
+
+        $params = [
+            'transaction_details' => [
+                'order_id'     => $order->order_number,
+                'gross_amount' => (int) $order->total_amount,
+            ],
+            'customer_details' => [
+                'first_name' => $user->name,
+                'email'      => $user->email,
+                'phone'      => $user->phone ?? '',
+            ],
+            'item_details' => $itemDetails,
+        ];
+
+        try {
+            $snapToken = Snap::getSnapToken($params);
+            $order->update(['snap_token' => $snapToken]);
+
+            return response()->json([
+                'success'    => true,
+                'snap_token' => $snapToken,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('MIDTRANS REPAY ERROR', [
+                'order_number' => $order->order_number,
+                'message'      => $e->getMessage(),
+            ]);
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
     }
 
     private function getCartItems()
